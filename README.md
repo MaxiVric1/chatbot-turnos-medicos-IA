@@ -37,8 +37,8 @@ Reglas:
 ## Instalación
 
 ```bash
-git clone <url-del-repositorio>
-cd <carpeta-del-proyecto>
+git clone https://github.com/MaxiVric1/chatbot-turnos-medicos-IA.git
+cd chatbot-turnos-medicos-IA
 
 # Solo si se va a usar la versión de Telegram
 python -m pip install python-telegram-bot
