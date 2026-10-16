@@ -15,6 +15,7 @@ definida, del archivo token_telegram.txt (junto a este script).
 
 import logging
 import os
+import re
 
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.error import BadRequest
@@ -150,6 +151,21 @@ def horario_elegido(estado):
     return {"medico_id": estado["medico_turno"], "fecha": estado["fecha"], "hora": estado["hora"]}
 
 
+def etiqueta_dia(datos, fecha, horarios, actual=None, combinado=False):
+    """
+    Botón de un día. Con "Cualquier médico disponible" se nombra a los médicos
+    que atienden ese día (solo el apellido, para que el botón no quede largo).
+    """
+    if not combinado:
+        return cb.texto_dia(datos, fecha, horarios, actual)
+    ids = {h["medico_id"] for h in horarios if h["fecha"] == fecha}
+    apellidos = sorted(cb.buscar_por_id(datos["medicos"], i)["nombre"].split()[-1] for i in ids)
+    texto = f"{cb.formatear_dia(fecha)} · {' y '.join(apellidos)}"
+    if actual and actual[1] == fecha:
+        texto += " ← tu turno actual"
+    return texto
+
+
 def etiqueta_turno(datos, turno):
     """Versión corta de un turno para que entre en un botón."""
     especialidad = cb.buscar_por_id(datos["especialidades"], turno["especialidad_id"])
@@ -194,7 +210,7 @@ def paso_dni(estado, valor):
 
 
 def ofrecer_especialidades(estado, datos):
-    return ofrecer(estado, "especialidad", "¿Para qué especialidad necesitás el turno?",
+    return ofrecer(estado, "especialidad", "¿Qué especialidad necesitás?",
                    [(e["nombre"], f"e:{e['id']}") for e in datos["especialidades"]])
 
 
@@ -208,17 +224,11 @@ def paso_especialidad(estado, valor):
                 ofrecer_especialidades(estado, datos)]
     estado["esp_id"] = especialidad["id"]
 
-    lineas, opciones = [], []
-    for i, m in enumerate(medicos, start=1):
-        libres = sum(h["disponible"] for h in m["horarios"])
-        lineas.append(f"{i}. {m['nombre']} ({m['matricula']}) - {libres} turnos libres")
-        opciones.append((f"{m['nombre']} ({libres} libres)", f"d:{m['id']}"))
+    opciones = [(f"{m['nombre']} ({sum(h['disponible'] for h in m['horarios'])} libres)", f"d:{m['id']}")
+                for m in medicos]
     if len(medicos) > 1:
-        lineas.append(f"{len(medicos) + 1}. {cb.OPCION_CUALQUIERA}")
         opciones.append((cb.OPCION_CUALQUIERA, "d:todos"))
-    texto = (f"Estos son los profesionales de {especialidad['nombre']}. ¿Con quién querés atenderte?\n\n"
-             + "\n".join(lineas))
-    return [ofrecer(estado, "medico", texto, opciones)]
+    return [ofrecer(estado, "medico", "¿Con qué médico querés atenderte?", opciones)]
 
 
 def ofrecer_turnos(estado, datos):
@@ -226,9 +236,8 @@ def ofrecer_turnos(estado, datos):
     if not turnos:
         return [(f"No encontré turnos reservados para el DNI {estado['dni']}.", None), menu(estado)]
     verbo = "cancelar" if estado["accion"] == "cancelar" else "modificar"
-    texto = (f"Encontré {len(turnos)} turno(s) para el DNI {estado['dni']}. ¿Cuál querés {verbo}?\n\n"
-             + "\n".join(f"{i}. {cb.describir_turno(datos, t)}" for i, t in enumerate(turnos, start=1)))
-    return [ofrecer(estado, "turno", texto, [(etiqueta_turno(datos, t), f"t:{t['id']}") for t in turnos])]
+    return [ofrecer(estado, "turno", f"¿Qué turno querés {verbo}?",
+                    [(etiqueta_turno(datos, t), f"t:{t['id']}") for t in turnos])]
 
 
 def paso_turno(estado, valor):
@@ -246,19 +255,15 @@ def paso_turno(estado, valor):
     # Modificar: elegir médico dentro de la misma especialidad
     especialidad = cb.buscar_por_id(datos["especialidades"], turno["especialidad_id"])
     estado["esp_id"] = especialidad["id"]
-    lineas, opciones = [], []
+    opciones = []
     medicos = [m for m in datos["medicos"] if m["especialidad_id"] == especialidad["id"]]
-    for i, m in enumerate(medicos, start=1):
+    for m in medicos:
         libres = sum(h["disponible"] for h in m["horarios"])
         marca = " ← actual" if m["id"] == turno["medico_id"] else ""
-        lineas.append(f"{i}. {m['nombre']} ({m['matricula']}) - {libres} turnos libres{marca}")
         opciones.append((f"{m['nombre']} ({libres} libres){marca}", f"d:{m['id']}"))
     if len(medicos) > 1:
-        lineas.append(f"{len(medicos) + 1}. {cb.OPCION_CUALQUIERA}")
         opciones.append((cb.OPCION_CUALQUIERA, "d:todos"))
-    texto = (f"Elegí el profesional de {especialidad['nombre']} (podés mantener el actual):\n\n"
-             + "\n".join(lineas))
-    return [ofrecer(estado, "medico", texto, opciones)]
+    return [ofrecer(estado, "medico", "¿Con qué médico querés atenderte?", opciones)]
 
 
 def paso_medico(estado, valor):
@@ -273,13 +278,8 @@ def ofrecer_dias(estado, datos):
         return [(f"No hay horarios disponibles con {con_quien}. Probá con otro profesional.", None),
                 menu(estado)]
     fechas = sorted({h["fecha"] for h in horarios})
-    texto = f"¿Qué día querés atenderte con {con_quien}?"
-    if combinado:
-        # Los nombres de los médicos de cada día van en el mensaje para que los botones no queden largos
-        texto += "\n\n" + "\n".join(f"{i}. {cb.texto_dia(datos, f, horarios, actual, combinado=True)}"
-                                    for i, f in enumerate(fechas, start=1))
-    opciones = [(cb.texto_dia(datos, f, horarios, actual), f"f:{f}") for f in fechas]
-    return [ofrecer(estado, "dia", texto, opciones)]
+    opciones = [(etiqueta_dia(datos, f, horarios, actual, combinado), f"f:{f}") for f in fechas]
+    return [ofrecer(estado, "dia", "¿Qué día querés atenderte?", opciones)]
 
 
 def paso_dia(estado, valor):
@@ -293,8 +293,7 @@ def ofrecer_horas(estado, datos):
     if not del_dia:
         return [("Ese día ya no tiene horarios disponibles.", None)] + ofrecer_dias(estado, datos)
     opciones = [(cb.texto_hora(datos, h, actual, combinado), f"h:{h['medico_id']}:{h['hora']}") for h in del_dia]
-    return [ofrecer(estado, "hora", f"Horarios disponibles el {cb.formatear_dia(estado['fecha'])}:",
-                    opciones, volver=VOLVER_DIAS)]
+    return [ofrecer(estado, "hora", "¿En qué horario querés atenderte?", opciones, volver=VOLVER_DIAS)]
 
 
 def paso_hora(estado, valor):
@@ -431,6 +430,26 @@ PASOS = {
 # Conexión con Telegram
 # ---------------------------------------------------------------------------
 
+ICONOS_ELECCION = {"m": "📋", "e": "🩺", "d": "👨‍⚕️", "t": "🗂️", "f": "📅", "h": "🕐"}
+
+
+def resumen_eleccion(dato, etiqueta):
+    """
+    Texto corto que reemplaza a un mensaje con botones una vez elegida una opción.
+    Ej.: ("f:2026-10-20", "3. Martes 20/10/2026 (3 horarios)") -> "📅 Elegiste: Martes 20/10/2026"
+    """
+    limpio = re.sub(r"^\d+\.\s*", "", etiqueta)       # número de la opción
+    limpio = re.sub(r"\s*←.*$", "", limpio)            # marcas "← actual"
+    limpio = re.sub(r"\s*\([^)]*\)$", "", limpio)      # "(3 horarios)", "(26 libres)"
+    if dato.startswith("f:"):
+        limpio = limpio.split(" · ")[0]                 # apellidos de los médicos del día
+    icono = ICONOS_ELECCION.get(dato.split(":", 1)[0], "👉")
+    propio = re.match(r"^([^\w\s#]+)\s+(.+)$", limpio)  # opciones que ya traen ícono: "✅ Confirmar"
+    if propio:
+        icono, limpio = propio.groups()
+    return f"{icono} Elegiste: {limpio}"
+
+
 def teclado(botones):
     if not botones:
         return None
@@ -439,34 +458,70 @@ def teclado(botones):
 
 async def enviar(update: Update, context: ContextTypes.DEFAULT_TYPE, respuestas):
     for texto, botones in respuestas:
-        await context.bot.send_message(update.effective_chat.id, texto, reply_markup=teclado(botones))
+        mensaje = await context.bot.send_message(update.effective_chat.id, texto, reply_markup=teclado(botones))
+        if botones:
+            # Se recuerda el último mensaje con botones para poder resumirlo después
+            context.chat_data["teclado"] = {"id": mensaje.message_id, "botones": botones}
+
+
+async def resumir_mensaje(context: ContextTypes.DEFAULT_TYPE, chat_id, mensaje_id, botones, dato):
+    """
+    Reemplaza un mensaje con botones por el resumen de lo elegido. Si no se
+    eligió ninguna de sus opciones (por ejemplo, al escribir /start), solo se
+    le quitan los botones.
+    """
+    etiqueta = next((e for e, d in botones if d == dato), None) if dato else None
+    try:
+        if etiqueta:
+            await context.bot.edit_message_text(resumen_eleccion(dato, etiqueta),
+                                                chat_id=chat_id, message_id=mensaje_id)
+        else:
+            await context.bot.edit_message_reply_markup(chat_id=chat_id, message_id=mensaje_id, reply_markup=None)
+    except BadRequest:
+        pass  # el mensaje ya no se puede editar (muy viejo o ya modificado)
+
+
+async def resumir_ultimo_teclado(update: Update, context: ContextTypes.DEFAULT_TYPE, dato=None):
+    ultimo = context.chat_data.pop("teclado", None)
+    if ultimo:
+        await resumir_mensaje(context, update.effective_chat.id, ultimo["id"], ultimo["botones"], dato)
 
 
 async def comando_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await resumir_ultimo_teclado(update, context)
     await enviar(update, context, [menu(context.user_data, BIENVENIDA)])
 
 
 async def comando_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await resumir_ultimo_teclado(update, context)
     await enviar(update, context, [menu(context.user_data)])
 
 
 async def recibir_texto(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await enviar(update, context, manejar(context.user_data, "texto", update.message.text))
+    estado = context.user_data
+    texto = update.message.text.strip()
+    # Si el usuario escribió el número de una opción, se identifica cuál era antes de avanzar
+    dato = traducir_numero(estado, texto) if estado.get("paso") not in (None, "dni") else None
+
+    respuestas = manejar(estado, "texto", texto)
+    # Los botones anteriores quedan obsoletos si se eligió una opción o si llegan botones nuevos
+    if dato is not None or any(botones for _, botones in respuestas):
+        await resumir_ultimo_teclado(update, context, dato)
+    await enviar(update, context, respuestas)
 
 
 async def recibir_boton(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
 
-    # Se quitan los botones del mensaje anterior y se deja anotado qué se eligió
+    # El mensaje con botones se reemplaza por un resumen corto de lo elegido
     mensaje = query.message
     if mensaje is not None and getattr(mensaje, "reply_markup", None):
-        elegido = next((b.text for fila in mensaje.reply_markup.inline_keyboard for b in fila
-                        if b.callback_data == query.data), None)
-        try:
-            await query.edit_message_text(f"{mensaje.text}\n\n👉 {elegido}" if elegido else mensaje.text)
-        except BadRequest:
-            pass
+        botones = [(b.text, b.callback_data) for fila in mensaje.reply_markup.inline_keyboard for b in fila]
+        await resumir_mensaje(context, update.effective_chat.id, mensaje.message_id, botones, query.data)
+        ultimo = context.chat_data.get("teclado")
+        if ultimo and ultimo["id"] == mensaje.message_id:
+            context.chat_data.pop("teclado")
 
     await enviar(update, context, manejar(context.user_data, "boton", query.data))
 
