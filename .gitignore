@@ -1,0 +1,23 @@
+# --- Datos sensibles ---
+# Token del bot de Telegram: quien lo tenga puede controlar el bot
+token_telegram.txt
+# Variables de entorno y otros archivos con credenciales
+.env
+.env.*
+*.key
+*.pem
+secrets.*
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+
+# --- Editores y sistema operativo ---
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini

@@ -1,0 +1,264 @@
+{
+  "especialidades": [
+    {
+      "id": 1,
+      "nombre": "Clínica Médica"
+    },
+    {
+      "id": 2,
+      "nombre": "Cardiología"
+    },
+    {
+      "id": 3,
+      "nombre": "Pediatría"
+    },
+    {
+      "id": 4,
+      "nombre": "Dermatología"
+    },
+    {
+      "id": 5,
+      "nombre": "Traumatología"
+    },
+    {
+      "id": 6,
+      "nombre": "Oftalmología"
+    }
+  ],
+  "medicos": [
+    {
+      "id": 1,
+      "nombre": "Dra. Laura Fernández",
+      "especialidad_id": 1,
+      "matricula": "MN-10450",
+      "dias_atencion": [
+        "Lunes",
+        "Miércoles",
+        "Viernes"
+      ],
+      "horas_atencion": [
+        "08:00",
+        "08:30",
+        "09:00"
+      ]
+    },
+    {
+      "id": 2,
+      "nombre": "Dr. Martín Gómez",
+      "especialidad_id": 1,
+      "matricula": "MN-10487",
+      "dias_atencion": [
+        "Martes",
+        "Jueves",
+        "Viernes"
+      ],
+      "horas_atencion": [
+        "14:00",
+        "14:30",
+        "15:00"
+      ]
+    },
+    {
+      "id": 3,
+      "nombre": "Dr. Ricardo Paz",
+      "especialidad_id": 2,
+      "matricula": "MN-10524",
+      "dias_atencion": [
+        "Lunes",
+        "Miércoles",
+        "Viernes"
+      ],
+      "horas_atencion": [
+        "08:00",
+        "08:30",
+        "09:00"
+      ]
+    },
+    {
+      "id": 4,
+      "nombre": "Dra. Silvia Romero",
+      "especialidad_id": 2,
+      "matricula": "MN-10561",
+      "dias_atencion": [
+        "Martes",
+        "Jueves",
+        "Viernes"
+      ],
+      "horas_atencion": [
+        "14:00",
+        "14:30",
+        "15:00"
+      ]
+    },
+    {
+      "id": 5,
+      "nombre": "Dra. Carolina Méndez",
+      "especialidad_id": 3,
+      "matricula": "MN-10598",
+      "dias_atencion": [
+        "Lunes",
+        "Miércoles",
+        "Viernes"
+      ],
+      "horas_atencion": [
+        "08:00",
+        "08:30",
+        "09:00"
+      ]
+    },
+    {
+      "id": 6,
+      "nombre": "Dr. Pablo Acosta",
+      "especialidad_id": 3,
+      "matricula": "MN-10635",
+      "dias_atencion": [
+        "Martes",
+        "Jueves",
+        "Viernes"
+      ],
+      "horas_atencion": [
+        "14:00",
+        "14:30",
+        "15:00"
+      ]
+    },
+    {
+      "id": 7,
+      "nombre": "Dra. Valeria Ruiz",
+      "especialidad_id": 4,
+      "matricula": "MN-10672",
+      "dias_atencion": [
+        "Lunes",
+        "Miércoles",
+        "Viernes"
+      ],
+      "horas_atencion": [
+        "08:00",
+        "08:30",
+        "09:00"
+      ]
+    },
+    {
+      "id": 8,
+      "nombre": "Dr. Hernán Castro",
+      "especialidad_id": 4,
+      "matricula": "MN-10709",
+      "dias_atencion": [
+        "Martes",
+        "Jueves",
+        "Viernes"
+      ],
+      "horas_atencion": [
+        "14:00",
+        "14:30",
+        "15:00"
+      ]
+    },
+    {
+      "id": 9,
+      "nombre": "Dr. Javier Molina",
+      "especialidad_id": 5,
+      "matricula": "MN-10746",
+      "dias_atencion": [
+        "Lunes",
+        "Miércoles",
+        "Viernes"
+      ],
+      "horas_atencion": [
+        "08:00",
+        "08:30",
+        "09:00"
+      ]
+    },
+    {
+      "id": 10,
+      "nombre": "Dra. Natalia Suárez",
+      "especialidad_id": 5,
+      "matricula": "MN-10783",
+      "dias_atencion": [
+        "Martes",
+        "Jueves",
+        "Viernes"
+      ],
+      "horas_atencion": [
+        "14:00",
+        "14:30",
+        "15:00"
+      ]
+    },
+    {
+      "id": 11,
+      "nombre": "Dra. Mariana Ortiz",
+      "especialidad_id": 6,
+      "matricula": "MN-10820",
+      "dias_atencion": [
+        "Lunes",
+        "Miércoles",
+        "Viernes"
+      ],
+      "horas_atencion": [
+        "08:00",
+        "08:30",
+        "09:00"
+      ]
+    },
+    {
+      "id": 12,
+      "nombre": "Dr. Gustavo Benítez",
+      "especialidad_id": 6,
+      "matricula": "MN-10857",
+      "dias_atencion": [
+        "Martes",
+        "Jueves",
+        "Viernes"
+      ],
+      "horas_atencion": [
+        "14:00",
+        "14:30",
+        "15:00"
+      ]
+    }
+  ],
+  "turnos_reservados": [
+    {
+      "id": 1,
+      "dni": "30123456",
+      "medico_id": 8,
+      "especialidad_id": 4,
+      "fecha": "2026-10-09",
+      "hora": "14:30",
+      "codigo": "23JEQ8B6",
+      "fecha_reserva": "2026-10-02 10:12:45"
+    },
+    {
+      "id": 2,
+      "dni": "30123456",
+      "medico_id": 5,
+      "especialidad_id": 3,
+      "fecha": "2026-10-12",
+      "hora": "08:30",
+      "codigo": "0X7M6X0X",
+      "fecha_reserva": "2026-10-05 17:40:03"
+    },
+    {
+      "id": 3,
+      "dni": "30123456",
+      "medico_id": 9,
+      "especialidad_id": 5,
+      "fecha": "2026-10-14",
+      "hora": "09:00",
+      "codigo": "5XFPUVMB",
+      "fecha_reserva": "2026-10-07 09:21:18"
+    },
+    {
+      "id": 4,
+      "dni": "90123456",
+      "medico_id": 4,
+      "especialidad_id": 2,
+      "fecha": "2026-10-20",
+      "hora": "14:30",
+      "codigo": "1753DZSE",
+      "fecha_reserva": "2026-10-16 04:55:42"
+    }
+  ]
+}
